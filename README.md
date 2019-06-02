@@ -1,29 +1,43 @@
-[![Black Hat Arsenal Asia 2018](https://github.com/toolswatch/badges/blob/master/arsenal/asia/2018.svg)](https://www.toolswatch.org/2018/01/black-hat-arsenal-asia-2018-great-lineup/) - [Slidedeck](https://www.slideshare.net/prashant3535/adrecon-bh-asia-2018-arsenal-presentation)
+# ADRecon: Active Directory Recon [![Follow ADRecon on Twitter](https://img.shields.io/twitter/follow/ad_recon.svg?style=social&label=Follow%20%40ad_recon)](https://twitter.com/intent/user?screen_name=ad_recon "Follow ADRecon on Twitter")
 
-# ActiveDirectoryRecon
+ADRecon is a tool which extracts and combines various artefacts (as highlighted below) out of an AD environment. The information can be presented in a specially formatted Microsoft Excel report that includes summary views with metrics to facilitate analysis and provide a holistic picture of the current state of the target AD environment.
 
-ADRecon is a tool which extracts various artifacts (as highlighted below) out of an AD environment in a specially formatted Microsoft Excel report that includes summary views with metrics to facilitate analysis.
-The report can provide a holistic picture of the current state of the target AD environment.
-The tool is useful to various classes of security professionals like auditors, DIFR, students, administrators, etc. It can also be an invaluable post-exploitation tool for a penetration tester.
-It can be run from any workstation that is connected to the environment, even hosts that are not domain members. Furthermore, the tool can be executed in the context of a non-privileged (i.e. standard domain user) accounts. Fine Grained Password Policy, LAPS and BitLocker may require Privileged user accounts.
-The tool will use Microsoft Remote Server Administration Tools (RSAT) if available, otherwise it will communicate with the Domain Controller using LDAP.
+The tool is useful to various classes of security professionals like auditors, DFIR, students, administrators, etc. It can also be an invaluable post-exploitation tool for a penetration tester.
+
+It can be run from any workstation that is connected to the environment, even hosts that are not domain members. Furthermore, the tool can be executed in the context of a non-privileged (i.e. standard domain user) account. Fine Grained Password Policy, LAPS and BitLocker may require Privileged user accounts. The tool will use Microsoft Remote Server Administration Tools (RSAT) if available, otherwise it will communicate with the Domain Controller using LDAP.
+
 The following information is gathered by the tool:
 
 - Forest;
-- Domains in the Forest and other attributes such as Sites;
-- Domain Password Policy;
-- Domain Controllers and their roles;
+- Domain;
+- Trusts;
+- Sites;
+- Subnets;
+- Default and Fine Grained Password Policy (if implemented);
+- Domain Controllers, SMB versions, whether SMB Signing is supported and FSMO roles;
 - Users and their attributes;
-- Service Principal Names;
+- Service Principal Names (SPNs);
 - Groups and memberships;
-- Organizational Units and their ACLs;
-- Group Policy Object details;
+- Organizational Units (OUs);
+- GroupPolicy objects and gPLink details;
 - DNS Zones and Records;
 - Printers;
 - Computers and their attributes;
+- PasswordAttributes (Experimental);
 - LAPS passwords (if implemented);
-- BitLocker Recovery Keys (if implemented); and
-- Domain GPO Report (requires RSAT).
+- BitLocker Recovery Keys (if implemented);
+- ACLs (DACLs and SACLs) for the Domain, OUs, Root Containers, GPO, Users, Computers and Groups objects;
+- GPOReport (requires RSAT);
+- Kerberoast (not included in the default collection method); and
+- Domain accounts used for service accounts (requires privileged account and not included in the default collection method).
+
+ADRecon was presented at: [![Black Hat Arsenal Asia 2018](https://github.com/toolswatch/badges/blob/master/arsenal/asia/2018.svg)](https://www.blackhat.com/asia-18/arsenal.html#adrecon-active-directory-recon) - [Slidedeck](https://speakerdeck.com/prashant3535/adrecon-bh-asia-2018-arsenal-presentation)
+
+[![Black Hat Arsenal USA 2018](https://github.com/toolswatch/badges/blob/master/arsenal/usa/2018.svg)](https://www.blackhat.com/us-18/arsenal/schedule/index.html#adrecon-active-directory-recon-11912) | [![DEFCON 26 Demolabs](https://hackwith.github.io/badges/defcon/26/demolabs.svg)](https://www.defcon.org/html/defcon-26/dc-26-demolabs.html) - [Slidedeck](https://speakerdeck.com/prashant3535/adrecon-bh-usa-2018-arsenal-and-def-con-26-demo-labs-presentation)
+
+[Bay Area OWASP](https://www.meetup.com/en-AU/Bay-Area-OWASP/events/253585385/) - [Slidedeck](https://speakerdeck.com/prashant3535/active-directory-recon-101-owasp-bay-area-presentation)
+
+[CHCON](https://2018.chcon.nz/mainevent.html) - [Slidedeck](https://speakerdeck.com/prashant3535/adrecon-detection-chcon-2018)
 
 ## Getting Started
 
@@ -76,7 +90,7 @@ PS C:\>.\ADRecon.ps1 -Protocol LDAP -DomainController <IP or FQDN> -Credential <
 To run ADRecon with specific modules on a non-member host with RSAT. (Default OutputType is STDOUT with -Collect parameter)
 
 ```
-PS C:\>.\ADRecon.ps1 -Protocol ADWS -DomainController <IP or FQDN> -Credential <domain\username> -Collect Domian, DCs
+PS C:\>.\ADRecon.ps1 -Protocol ADWS -DomainController <IP or FQDN> -Credential <domain\username> -Collect Domain, DomainControllers
 ```
 
 To generate the ADRecon-Report.xlsx based on ADRecon output (CSV Files).
@@ -103,27 +117,27 @@ When you run ADRecon, a `ADRecon-Report-<timestamp>` folder will be created whic
     Path for ADRecon output folder containing the CSV files to generate the ADRecon-Report.xlsx. Use it to generate the ADRecon-Report.xlsx when Microsoft Excel is not installed on the host used to run ADRecon.
 
 -OutputDir <String>
-    Path for ADRecon output folder to save the CSV files and the ADRecon-Report.xlsx. (The folder specified will be created if it doesn't exist) (Default pwd)
+    Path for ADRecon output folder to save the CSV/XML/JSON/HTML files and the ADRecon-Report.xlsx. (The folder specified will be created if it doesn't exist) (Default pwd)
 
 -Collect <String>
-    What attributes to collect (Comma separated; e.g Forest,Domain)
-    Valid values include: Forest, Domain, PasswordPolicy, DCs, Users, UserSPNs, Groups, GroupMembers, OUs, OUPermissions, GPOs, GPOReport, DNSZones, Printers, Computers, ComputerSPNs, LAPS, BitLocker.
+    Which modules to run (Comma separated; e.g Forest,Domain. Default all except Kerberoast)
+    Valid values include: Forest, Domain, Trusts, Sites, Subnets, PasswordPolicy, FineGrainedPasswordPolicy, DomainControllers, Users, UserSPNs, PasswordAttributes, Groups, GroupMembers, OUs, ACLs, GPOs, gPLinks, GPOReport, DNSZones, Printers, Computers, ComputerSPNs, LAPS, BitLocker, Kerberoast DomainAccountsusedforServiceLogon.
 
 -OutputType <String>
     Output Type; Comma seperated; e.g CSV,STDOUT,Excel (Default STDOUT with -Collect parameter, else CSV and Excel).
-    Valid values include: STDOUT, CSV, Excel.
+    Valid values include: STDOUT, CSV, XML, JSON, HTML, Excel, All (excludes STDOUT).
 
 -DormantTimeSpan <Int>
     Timespan for Dormant accounts. (Default 90 days)
+
+-PassMaxAge <Int>
+    Maximum machine account password age. (Default 30 days)
 
 -PageSize <Int>
     The PageSize to set for the LDAP searcher object. (Default 200)
 
 -Threads <Int>
     The number of threads to use during processing objects (Default 10)
-
--FlushCount <Int>
-    The number of processed objects which will be flushed to disk. (Default -1; Flush after all objects are processed).
 
 -Log <Switch>
     Create ADRecon Log using Start-Transcript
@@ -132,11 +146,13 @@ When you run ADRecon, a `ADRecon-Report-<timestamp>` folder will be created whic
 ### Future Plans
 
 - Replace System.DirectoryServices.DirectorySearch with System.DirectoryServices.Protocols and add support for LDAP STARTTLS and LDAPS (TCP port 636).
-- Add Domain Trust Enumeration.
-- Gather ACLs for the useraccountcontrol attribute and the ms-mcs-admpwd LAPS attribute to determine which users can read the values.
-- Gather DS_CONTROL_ACCESS and Extended Rights, such as User-Force-Change-Password, DS-Replication-Get-Changes, DS-Replication-Get-Changes-All, etc. which can be used as alternative attack vectors.
-- Additional export and storage option: export to ~STDOUT~, SQLite, xml, html.
+- ~~Add Domain Trust Enumeration.~~
+- Add option to filter default ACLs.
+- ~~Gather ACLs for other objects such as Users, Group, etc.~~
+- Additional export and storage option: export to ~~STDOUT~~, SQLite, ~~xml~~, ~~json~~, ~~html~~, pdf.
+- Use the EPPlus library for Excel Report generation and remove the dependency on MS Excel.
 - List issues identified and provide recommended remediation advice based on analysis of the data.
+- Add PowerShell Core support.
 
 ### Bugs, Issues and Feature Requests
 
